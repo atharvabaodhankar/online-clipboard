@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
+    "drizzle-kit": "^0.31.5",
+    "drizzle-orm": "^0.44.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
