@@ -10,19 +10,10 @@ export default function App() {
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // Fetch saved clipboard items
-  const fetchClipboards = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/clipboard`);
-      const data = await res.json();
-      setClipboards(data);
-    } catch (err) {
-      console.error("Failed to fetch clipboards:", err);
-    }
-  };
-
   useEffect(() => {
-    fetchClipboards();
+    // No API to fetch all clipboards, so initializing with an empty array.
+    // If a "fetch all" API is added later, this can be updated.
+    setClipboards([]);
   }, []);
 
   // Save new clipboard
@@ -74,15 +65,6 @@ export default function App() {
     alert("Copied!");
   };
 
-  // Delete clipboard (optional)
-  const deleteClipboard = async (id) => {
-    try {
-      await fetch(`${API_URL}/api/clipboard/${id}`, { method: "DELETE" });
-      setClipboards(clipboards.filter(c => c.id !== id));
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   return (
     <div className={`${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"} min-h-screen`}>
@@ -143,9 +125,6 @@ export default function App() {
               <div className="flex space-x-3">
                 <button onClick={() => copyToClipboard(clip.content)} className="p-2 rounded-lg hover:bg-gray-700">
                   <Copy size={18} />
-                </button>
-                <button onClick={() => deleteClipboard(clip.id)} className="p-2 rounded-lg hover:bg-gray-700 text-red-400">
-                  <Trash size={18} />
                 </button>
               </div>
             </motion.div>
