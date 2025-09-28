@@ -7,6 +7,7 @@ export default function App() {
   const [content, setContent] = useState("");
   const [expiry, setExpiry] = useState("1d");
   const [clipboards, setClipboards] = useState([]);
+  const [fetchCode, setFetchCode] = useState("");
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -103,6 +104,26 @@ export default function App() {
             className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow hover:scale-105 transition"
           >
             Save to Clipboard
+          </button>
+        </div>
+      </div>
+
+      {/* Fetch by Code Section */}
+      <div className="p-6 max-w-2xl mx-auto">
+        <h2 className="text-xl font-semibold mb-4">Fetch Clipboard by Code</h2>
+        <div className="flex space-x-2">
+          <input
+            type="text"
+            className="flex-grow p-4 rounded-xl border border-gray-600 bg-transparent focus:ring-2 focus:ring-purple-500"
+            placeholder="Enter code to fetch"
+            value={fetchCode}
+            onChange={(e) => setFetchCode(e.target.value)}
+          />
+          <button
+            onClick={() => fetchByCode(fetchCode)}
+            className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-xl shadow hover:scale-105 transition"
+          >
+            Fetch
           </button>
         </div>
       </div>
