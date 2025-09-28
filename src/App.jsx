@@ -107,30 +107,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Clipboard Items */}
-      <div className="p-6 max-w-3xl mx-auto">
-        <h2 className="text-xl font-semibold mb-4">📋 Your Clipboards</h2>
-        <div className="space-y-4">
-          {clipboards.map((clip, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-4 rounded-xl bg-gray-800 shadow-lg flex justify-between items-center"
-            >
-              <div>
-                <p className="font-mono text-sm">{clip.content.slice(0, 100)}...</p>
-                <span className="text-xs text-gray-400">Expires: {clip.expiresAt}</span>
-              </div>
-              <div className="flex space-x-3">
-                <button onClick={() => copyToClipboard(clip.content)} className="p-2 rounded-lg hover:bg-gray-700">
-                  <Copy size={18} />
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
+
     </div>
   );
 }
