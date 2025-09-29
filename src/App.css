@@ -1,0 +1,18 @@
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2d3748; /* Darker background for the track */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #8b5cf6; /* Purple color for the thumb */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7c3aed; /* Darker purple on hover */
+}

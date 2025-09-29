@@ -123,7 +123,7 @@ export default function App() {
           <h2 className="text-xl font-semibold mb-4">Fetched Content</h2>
           <div className="relative p-4 rounded-xl border border-gray-600 bg-transparent">
             <textarea
-              className="w-full p-2 bg-transparent resize-none outline-none"
+              className="w-full p-2 bg-transparent resize-none outline-none overflow-y-auto"
               rows={4}
               readOnly
               value={fetchedContent}
