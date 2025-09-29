@@ -9,6 +9,8 @@ export default function App() {
   const [clipboards, setClipboards] = useState([]);
   const [fetchCode, setFetchCode] = useState("");
   const [fetchedContent, setFetchedContent] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -33,9 +35,9 @@ export default function App() {
         // Add to local list
         setClipboards([{ content, code: data.code, expiresAt: expiry }, ...clipboards]);
         setContent("");
-        alert(`Saved! Your code: ${data.code}`);
+        showAlertDialog(`Saved! Your code: ${data.code}`);
       } else {
-        alert("Failed to save clipboard.");
+        showAlertDialog("Failed to save clipboard.");
       }
     } catch (err) {
       console.error(err);
@@ -54,7 +56,7 @@ export default function App() {
       if (data.content) {
         setFetchedContent(data.content);
       } else {
-        alert(data.error || "Failed to fetch");
+        showAlertDialog(data.error || "Failed to fetch");
         setFetchedContent("");
       }
     } catch (err) {
@@ -65,7 +67,12 @@ export default function App() {
   // Copy to system clipboard
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert("Copied!");
+    showAlertDialog("Copied!");
+  };
+
+  const showAlertDialog = (message) => {
+    setModalMessage(message);
+    setShowModal(true);
   };
 
 
@@ -151,7 +158,22 @@ export default function App() {
         </div>
       </div>
 
-
+      {/* Modal Dialog */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-xl shadow-2xl max-w-sm w-full text-center transform transition-all scale-100 opacity-100 duration-300 ease-out">
+            <div className="p-6">
+              <p className="text-lg text-gray-200 mb-6">{modalMessage}</p>
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75"
+              >
+                Got it!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
