@@ -8,6 +8,7 @@ export default function App() {
   const [expiry, setExpiry] = useState("1d");
   const [clipboards, setClipboards] = useState([]);
   const [fetchCode, setFetchCode] = useState("");
+  const [fetchedContent, setFetchedContent] = useState("");
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -51,9 +52,10 @@ export default function App() {
       });
       const data = await res.json();
       if (data.content) {
-        alert(`Fetched: ${data.content}`);
+        setFetchedContent(data.content);
       } else {
         alert(data.error || "Failed to fetch");
+        setFetchedContent("");
       }
     } catch (err) {
       console.error(err);
@@ -107,6 +109,27 @@ export default function App() {
           </button>
         </div>
       </div>
+
+      {/* Display Fetched Content */}
+      {fetchedContent && (
+        <div className="p-6 max-w-2xl mx-auto">
+          <h2 className="text-xl font-semibold mb-4">Fetched Content</h2>
+          <div className="relative p-4 rounded-xl border border-gray-600 bg-transparent">
+            <textarea
+              className="w-full p-2 bg-transparent resize-none outline-none"
+              rows={4}
+              readOnly
+              value={fetchedContent}
+            />
+            <button
+              onClick={() => copyToClipboard(fetchedContent)}
+              className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-700"
+            >
+              <Copy size={18} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Fetch by Code Section */}
       <div className="p-6 max-w-2xl mx-auto">
