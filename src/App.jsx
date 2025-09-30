@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Sun, Moon, Copy, Trash } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Sun, Moon, Copy } from "lucide-react";
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(true);
