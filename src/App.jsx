@@ -182,6 +182,40 @@ export default function App() {
         </div>
       </div>
 
+      
+      {/* Recent Clipboards */}
+      {clipboards.length > 0 && (
+        <div className="p-6 max-w-2xl mx-auto">
+          <h2 className="text-xl font-semibold mb-4">Recent Clipboards</h2>
+          <div className="space-y-4">
+            {clipboards.map((c) => (
+              <div key={c.code} className="p-4 rounded-xl border border-gray-600 bg-transparent relative">
+                <div className="text-sm text-gray-300 mb-2 truncate">{c.content}</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-gray-400">Code: <span className="font-mono">{c.code}</span></div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => copyToClipboard(c.content)}
+                      className="p-2 rounded-full hover:bg-gray-700"
+                      title="Copy content"
+                    >
+                      <Copy size={16} />
+                    </button>
+                    <button
+                      onClick={() => copyShareLink(`${window.location.origin}/?code=${c.code}`)}
+                      className="p-2 rounded-full hover:bg-gray-700"
+                      title="Copy share link"
+                    >
+                      <LinkIcon size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Modal Dialog */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
