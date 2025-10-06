@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Sun, Moon, Copy } from "lucide-react";
+import { Sun, Moon, Copy, Link as LinkIcon } from "lucide-react";
 
 export default function App() {
   const [darkMode, setDarkMode] = useState(true);
@@ -10,6 +10,7 @@ export default function App() {
   const [fetchedContent, setFetchedContent] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
+  const [shareLink, setShareLink] = useState("");
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -17,6 +18,17 @@ export default function App() {
     // No API to fetch all clipboards, so initializing with an empty array.
     // If a "fetch all" API is added later, this can be updated.
     setClipboards([]);
+    // Auto-fetch if app opened with ?code=XXXX
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlCode = params.get("code");
+      if (urlCode) {
+        setFetchCode(urlCode);
+        fetchByCode(urlCode);
+      }
+    } catch (e) {
+      // ignore when not running in browser-like environment
+    }
   }, []);
 
   // Save new clipboard
@@ -32,8 +44,12 @@ export default function App() {
 
       if (data.code) {
         // Add to local list
-        setClipboards([{ content, code: data.code, expiresAt: expiry }, ...clipboards]);
+        const newEntry = { content, code: data.code, expiresAt: expiry };
+        setClipboards([newEntry, ...clipboards]);
         setContent("");
+        // Prepare share link pointing to the frontend with the code in query param
+        const link = `${window.location.origin}/?code=${data.code}`;
+        setShareLink(link);
         showAlertDialog(`Saved! Your code: ${data.code}`);
       } else {
         showAlertDialog("Failed to save clipboard.");
@@ -72,6 +88,15 @@ export default function App() {
   const showAlertDialog = (message) => {
     setModalMessage(message);
     setShowModal(true);
+  };
+
+  const copyShareLink = async (link) => {
+    try {
+      await navigator.clipboard.writeText(link);
+      showAlertDialog("Link copied to clipboard");
+    } catch (e) {
+      showAlertDialog("Failed to copy link");
+    }
   };
 
 
