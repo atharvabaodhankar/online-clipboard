@@ -122,15 +122,16 @@ export default function App() {
           onChange={(e) => setContent(e.target.value)}
         />
         <div className="flex items-center justify-between mt-4">
-          <select
-            className="p-2 rounded-lg border border-gray-600 bg-transparent"
+           <select
+            className={`p-2 rounded-lg border border-gray-600 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
+            style={{ colorScheme: darkMode ? 'dark' : 'light' }}
             value={expiry}
             onChange={(e) => setExpiry(e.target.value)}
           >
-            <option value="1h">1 Hour</option>
-            <option value="1d">1 Day</option>
-            <option value="7d">7 Days</option>
-            <option value="never">Never</option>
+            <option value="1h" style={{ backgroundColor: darkMode ? '#1f2937' : undefined, color: darkMode ? '#fff' : undefined }}>1 Hour</option>
+            <option value="1d" style={{ backgroundColor: darkMode ? '#1f2937' : undefined, color: darkMode ? '#fff' : undefined }}>1 Day</option>
+            <option value="7d" style={{ backgroundColor: darkMode ? '#1f2937' : undefined, color: darkMode ? '#fff' : undefined }}>7 Days</option>
+            <option value="never" style={{ backgroundColor: darkMode ? '#1f2937' : undefined, color: darkMode ? '#fff' : undefined }}>Never</option>
           </select>
           <button
             onClick={saveClipboard}
