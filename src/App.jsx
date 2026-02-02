@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Sun, Moon, Copy, Link as LinkIcon } from "lucide-react";
+import { Copy, Link as LinkIcon, Clipboard, Search } from "lucide-react";
+import { Button } from "@/components/retroui/Button";
 
 export default function App() {
-  const [darkMode, setDarkMode] = useState(true);
   const [content, setContent] = useState("");
   const [expiry, setExpiry] = useState("1d");
   const [clipboards, setClipboards] = useState([]);
@@ -15,10 +15,7 @@ export default function App() {
   const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-    // No API to fetch all clipboards, so initializing with an empty array.
-    // If a "fetch all" API is added later, this can be updated.
     setClipboards([]);
-    // Auto-fetch if app opened with ?code=XXXX
     try {
       const params = new URLSearchParams(window.location.search);
       const urlCode = params.get("code");
@@ -27,11 +24,10 @@ export default function App() {
         fetchByCode(urlCode);
       }
     } catch (e) {
-      // ignore when not running in browser-like environment
+      // ignore
     }
   }, []);
 
-  // Save new clipboard
   const saveClipboard = async () => {
     if (!content) return;
     try {
@@ -43,14 +39,12 @@ export default function App() {
       const data = await res.json();
 
       if (data.code) {
-        // Add to local list
         const newEntry = { content, code: data.code, expiresAt: expiry };
         setClipboards([newEntry, ...clipboards]);
         setContent("");
-        // Prepare share link pointing to the frontend with the code in query param
         const link = `${window.location.origin}/?code=${data.code}`;
         setShareLink(link);
-        showAlertDialog(`Saved! Your code: ${data.code}`);
+        showAlertDialog(`Success! Code: ${data.code}`);
       } else {
         showAlertDialog("Failed to save clipboard.");
       }
@@ -59,7 +53,6 @@ export default function App() {
     }
   };
 
-  // Fetch clipboard by code
   const fetchByCode = async (code) => {
     try {
       const res = await fetch(`${API_URL}/api/fetch`, {
@@ -79,10 +72,9 @@ export default function App() {
     }
   };
 
-  // Copy to system clipboard
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    showAlertDialog("Copied!");
+    showAlertDialog("Copied to clipboard!");
   };
 
   const showAlertDialog = (message) => {
@@ -93,143 +85,171 @@ export default function App() {
   const copyShareLink = async (link) => {
     try {
       await navigator.clipboard.writeText(link);
-      showAlertDialog("Link copied to clipboard");
+      showAlertDialog("Link copied!");
     } catch (e) {
       showAlertDialog("Failed to copy link");
     }
   };
 
-
   return (
-    <div className={`${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"} min-h-screen`}>
+    <div className="bg-background text-foreground min-h-screen font-sans">
       {/* Header */}
-      <div className="flex justify-between items-center px-6 py-4 border-b border-gray-700">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-          Online Clipboard
-        </h1>
-        <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-full hover:bg-gray-700">
-          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
-      </div>
-
-      {/* Input Section */}
-      <div className="p-6 max-w-2xl mx-auto">
-        <textarea
-          className="w-full p-4 rounded-xl border border-gray-600 bg-transparent focus:ring-2 focus:ring-purple-500"
-          rows={4}
-          placeholder="Paste or type your text/code here..."
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-        />
-        <div className="flex items-center justify-between mt-4">
-           <select
-            className={`p-2 rounded-lg border border-gray-600 ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
-            style={{ colorScheme: darkMode ? 'dark' : 'light' }}
-            value={expiry}
-            onChange={(e) => setExpiry(e.target.value)}
-          >
-            <option value="1h" style={{ backgroundColor: darkMode ? '#1f2937' : undefined, color: darkMode ? '#fff' : undefined }}>1 Hour</option>
-            <option value="1d" style={{ backgroundColor: darkMode ? '#1f2937' : undefined, color: darkMode ? '#fff' : undefined }}>1 Day</option>
-            <option value="7d" style={{ backgroundColor: darkMode ? '#1f2937' : undefined, color: darkMode ? '#fff' : undefined }}>7 Days</option>
-            <option value="never" style={{ backgroundColor: darkMode ? '#1f2937' : undefined, color: darkMode ? '#fff' : undefined }}>Never</option>
-          </select>
-          <button
-            onClick={saveClipboard}
-            className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow hover:scale-105 transition"
-          >
-            Save to Clipboard
-          </button>
+      <header className="border-b-4 border-black px-6 py-8 bg-primary shadow-md sticky top-0 z-10 lg:flex lg:justify-between lg:items-center">
+        <div className="flex items-center space-x-3">
+          <Clipboard size={32} className="text-black" />
+          <h1 className="text-4xl lg:text-5xl font-head uppercase tracking-tighter text-black">
+            Retro Clipboard
+          </h1>
         </div>
-      </div>
+        <p className="mt-2 lg:mt-0 font-head text-black text-sm lg:text-lg opacity-80 decoration-2 underline-offset-4 underline">
+          Fast. Secure. Retro.
+        </p>
+      </header>
 
-      {/* Display Fetched Content */}
-      {fetchedContent && (
-        <div className="p-6 max-w-2xl mx-auto">
-          <h2 className="text-xl font-semibold mb-4">Fetched Content</h2>
-          <div className="relative p-4 rounded-xl border border-gray-600 bg-transparent">
-            <textarea
-              className="w-full p-2 bg-transparent resize-none outline-none overflow-y-auto"
-              rows={4}
-              readOnly
-              value={fetchedContent}
-            />
-            <button
-              onClick={() => copyToClipboard(fetchedContent)}
-              className="absolute top-2 right-2 p-2 rounded-full hover:bg-gray-700"
-            >
-              <Copy size={18} />
-            </button>
+      <main className="max-w-4xl mx-auto p-4 lg:p-8 space-y-12">
+        {/* Input Section */}
+        <section className="bg-card border-4 border-black shadow-xl p-6 relative">
+          <div className="absolute -top-4 -left-4 bg-black text-white px-4 py-1 font-head text-sm uppercase">
+            New Clip
           </div>
-        </div>
-      )}
-
-      {/* Fetch by Code Section */}
-      <div className="p-6 max-w-2xl mx-auto">
-        <h2 className="text-xl font-semibold mb-4">Fetch Clipboard by Code</h2>
-        <div className="flex space-x-2">
-          <input
-            type="text"
-            className="flex-grow p-4 rounded-xl border border-gray-600 bg-transparent focus:ring-2 focus:ring-purple-500"
-            placeholder="Enter code to fetch"
-            value={fetchCode}
-            onChange={(e) => setFetchCode(e.target.value)}
-          />
-          <button
-            onClick={() => fetchByCode(fetchCode)}
-            className="px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-xl shadow hover:scale-105 transition"
-          >
-            Fetch
-          </button>
-        </div>
-      </div>
-
-      
-      {/* Recent Clipboards */}
-      {clipboards.length > 0 && (
-        <div className="p-6 max-w-2xl mx-auto">
-          <h2 className="text-xl font-semibold mb-4">Recent Clipboards</h2>
           <div className="space-y-4">
-            {clipboards.map((c) => (
-              <div key={c.code} className="p-4 rounded-xl border border-gray-600 bg-transparent relative">
-                <div className="text-sm text-gray-300 mb-2 truncate">{c.content}</div>
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-gray-400">Code: <span className="font-mono">{c.code}</span></div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => copyToClipboard(c.content)}
-                      className="p-2 rounded-full hover:bg-gray-700"
-                      title="Copy content"
-                    >
-                      <Copy size={16} />
-                    </button>
-                    <button
-                      onClick={() => copyShareLink(`${window.location.origin}/?code=${c.code}`)}
-                      className="p-2 rounded-full hover:bg-gray-700"
-                      title="Copy share link"
-                    >
-                      <LinkIcon size={16} />
-                    </button>
-                  </div>
-                </div>
+            <textarea
+              className="w-full p-4 border-2 border-black bg-white focus:bg-accent outline-hidden transition-colors min-h-[160px] font-medium placeholder:text-muted-foreground/50"
+              placeholder="Paste your content here..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+            />
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <label className="block font-head text-xs uppercase mb-1">Expiration</label>
+                <select
+                  className="w-full p-3 border-2 border-black bg-white font-head appearance-none"
+                  value={expiry}
+                  onChange={(e) => setExpiry(e.target.value)}
+                >
+                  <option value="1h">1 Hour</option>
+                  <option value="1d">1 Day</option>
+                  <option value="7d">7 Days</option>
+                  <option value="never">Never</option>
+                </select>
               </div>
-            ))}
+              <div className="flex items-end flex-1">
+                <Button 
+                  onClick={saveClipboard}
+                  className="w-full text-lg h-full min-h-[52px]"
+                  size="lg"
+                >
+                  SAVE CLIPBOARD
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        </section>
+
+        {/* Display Fetched Content */}
+        {fetchedContent && (
+          <section className="bg-card border-4 border-black shadow-xl p-6 relative animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="absolute -top-4 -left-4 bg-secondary text-white px-4 py-1 font-head text-sm uppercase">
+              Fetched Result
+            </div>
+            <div className="relative border-2 border-black bg-white">
+              <textarea
+                className="w-full p-4 bg-transparent resize-none outline-none min-h-[160px] font-medium"
+                readOnly
+                value={fetchedContent}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => copyToClipboard(fetchedContent)}
+                className="absolute top-2 right-2"
+                title="Copy Content"
+              >
+                <Copy size={20} />
+              </Button>
+            </div>
+          </section>
+        )}
+
+        {/* Fetch by Code Section */}
+        <section className="bg-white border-4 border-black shadow-lg p-6 relative">
+          <div className="absolute -top-4 -left-4 bg-accent text-black px-4 py-1 font-head text-sm uppercase border-2 border-black">
+            Fetch Cache
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+              <input
+                type="text"
+                className="w-full pl-10 pr-4 py-3 border-2 border-black font-head placeholder:opacity-50"
+                placeholder="ENTER CODE..."
+                value={fetchCode}
+                onChange={(e) => setFetchCode(e.target.value)}
+              />
+            </div>
+            <Button 
+              onClick={() => fetchByCode(fetchCode)}
+              variant="secondary"
+              className="px-12"
+            >
+              FETCH CONTENT
+            </Button>
+          </div>
+        </section>
+
+        {/* Recent Clipboards */}
+        {clipboards.length > 0 && (
+          <section className="space-y-6 pb-12">
+            <h2 className="text-3xl font-head uppercase inline-block border-b-4 border-primary">
+              Recent Activity
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {clipboards.map((c) => (
+                <div key={c.code} className="border-4 border-black p-4 bg-white shadow-md hover:translate-x-1 hover:-translate-y-1 transition-transform group">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="bg-black text-white px-2 py-0.5 text-xs font-head">
+                      {c.code}
+                    </div>
+                    <div className="flex space-x-2">
+                       <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copyToClipboard(c.content)}
+                        className="h-8 w-8 hover:bg-primary"
+                      >
+                        <Copy size={14} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copyShareLink(`${window.location.origin}/?code=${c.code}`)}
+                        className="h-8 w-8 hover:bg-accent"
+                      >
+                        <LinkIcon size={14} />
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium line-clamp-3 text-muted-foreground group-hover:text-black transition-colors">
+                    {c.content}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
 
       {/* Modal Dialog */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 rounded-xl shadow-2xl max-w-sm w-full text-center transform transition-all scale-100 opacity-100 duration-300 ease-out">
-            <div className="p-6">
-              <p className="text-lg text-gray-200 mb-6">{modalMessage}</p>
-              <button
-                onClick={() => setShowModal(false)}
-                className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-75"
-              >
-                Got it!
-              </button>
-            </div>
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white border-4 border-black shadow-[12px_12px_0_0_rgba(0,0,0,1)] max-w-sm w-full p-8 text-center animate-in zoom-in-95 duration-200">
+            <p className="text-xl font-head mb-8 uppercase leading-tight">{modalMessage}</p>
+            <Button
+              onClick={() => setShowModal(false)}
+              className="w-full py-6 text-xl"
+            >
+              OK COOL
+            </Button>
           </div>
         </div>
       )}
