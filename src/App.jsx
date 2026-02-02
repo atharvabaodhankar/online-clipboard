@@ -92,18 +92,35 @@ export default function App() {
   };
 
   return (
-    <div className="bg-background text-foreground min-h-screen font-sans">
-      {/* Header */}
-      <header className="border-b-4 border-black px-6 py-8 bg-primary shadow-md sticky top-0 z-10 lg:flex lg:justify-between lg:items-center">
-        <div className="flex items-center space-x-3">
-          <Clipboard size={32} className="text-black" />
-          <h1 className="text-4xl lg:text-5xl font-head uppercase tracking-tighter text-black">
-            Retro Clipboard
+    <div className="bg-background text-foreground min-h-screen font-sans selection:bg-primary selection:text-black">
+      {/* Top Banner / Decorative Bar */}
+      <div className="bg-black text-white py-1 px-4 overflow-hidden whitespace-nowrap border-b-2 border-black">
+        <div className="animate-marquee inline-block font-head text-[10px] uppercase tracking-widest leading-none">
+          Retro Clipboard v2.0 • Secure End-to-End • Open Source • Built for Speed • No Account Required • 
+          Retro Clipboard v2.0 • Secure End-to-End • Open Source • Built for Speed • No Account Required • 
+        </div>
+      </div>
+
+      {/* Main Navbar */}
+      <header className="border-b-4 border-black px-4 lg:px-8 py-4 lg:py-6 bg-primary shadow-[8px_8px_0_0_rgba(0,0,0,1)] sticky top-0 z-50 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center space-x-3 group cursor-pointer">
+          <div className="bg-black p-2 border-2 border-white shadow-[2px_2px_0_0_rgba(255,255,255,1)] group-hover:bg-accent transition-colors">
+            <Clipboard size={24} className="text-white group-hover:text-black transition-colors" />
+          </div>
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-head uppercase tracking-tighter text-black leading-none mt-1">
+            Retro<span className="bg-black text-primary px-1 ml-1">Clipboard</span>
           </h1>
         </div>
-        <p className="mt-2 lg:mt-0 font-head text-black text-sm lg:text-lg opacity-80 decoration-2 underline-offset-4 underline">
-          Fast. Secure. Retro.
-        </p>
+        
+        <nav className="flex items-center gap-3 md:gap-6">
+          <div className="hidden sm:flex items-center gap-2 font-head text-xs uppercase text-black/60 bg-white/30 px-3 py-1 border-2 border-black/10 rounded-full">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            System Live
+          </div>
+          <p className="font-head text-black text-xs md:text-sm italic font-bold">
+            FAST. SECURE. <span className="underline decoration-2">RETRO.</span>
+          </p>
+        </nav>
       </header>
 
       <main className="max-w-4xl mx-auto p-4 lg:p-8 space-y-12">
