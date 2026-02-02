@@ -11,6 +11,8 @@ export default function App() {
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [shareLink, setShareLink] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -29,7 +31,8 @@ export default function App() {
   }, []);
 
   const saveClipboard = async () => {
-    if (!content) return;
+    if (!content || isSaving) return;
+    setIsSaving(true);
     try {
       const res = await fetch(`${API_URL}/api/share`, {
         method: "POST",
@@ -50,10 +53,15 @@ export default function App() {
       }
     } catch (err) {
       console.error(err);
+      showAlertDialog("Network error. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const fetchByCode = async (code) => {
+    if (!code || isFetching) return;
+    setIsFetching(true);
     try {
       const res = await fetch(`${API_URL}/api/fetch`, {
         method: "POST",
@@ -69,6 +77,9 @@ export default function App() {
       }
     } catch (err) {
       console.error(err);
+      showAlertDialog("Network error. Could not fetch.");
+    } finally {
+      setIsFetching(false);
     }
   };
 
@@ -152,8 +163,9 @@ export default function App() {
                   onClick={saveClipboard}
                   className="w-full text-lg h-full min-h-[52px]"
                   size="lg"
+                  disabled={isSaving}
                 >
-                  SAVE CLIPBOARD
+                  {isSaving ? "GENERATING..." : "SAVE CLIPBOARD"}
                 </Button>
               </div>
             </div>
@@ -205,8 +217,9 @@ export default function App() {
               onClick={() => fetchByCode(fetchCode)}
               variant="secondary"
               className="px-12"
+              disabled={isFetching}
             >
-              FETCH CONTENT
+              {isFetching ? "FETCHING..." : "FETCH CONTENT"}
             </Button>
           </div>
         </section>
