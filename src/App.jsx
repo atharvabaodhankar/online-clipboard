@@ -155,7 +155,6 @@ export default function App() {
                   <option value="1h">1 Hour</option>
                   <option value="1d">1 Day</option>
                   <option value="7d">7 Days</option>
-                  <option value="never">Never</option>
                 </select>
               </div>
               <div className="flex items-end flex-1">

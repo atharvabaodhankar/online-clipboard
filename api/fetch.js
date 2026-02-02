@@ -23,8 +23,7 @@ export default async function handler(req, res) {
         .where(
           and(
             eq(clipboardEntries.code, code),
-            // Only check expiry if expiresAt is not null
-            clipboardEntries.expiresAt === null ? undefined : gt(clipboardEntries.expiresAt, new Date())
+            gt(clipboardEntries.expiresAt, new Date())
           )
         )
         .limit(1);
