@@ -113,10 +113,7 @@ export default function App() {
         </div>
         
         <nav className="flex items-center gap-3 md:gap-6">
-          <div className="hidden sm:flex items-center gap-2 font-head text-xs uppercase text-black/60 bg-white/30 px-3 py-1 border-2 border-black/10 rounded-full">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            System Live
-          </div>
+        
           <p className="font-head text-black text-xs md:text-sm italic font-bold">
             FAST. SECURE. <span className="underline decoration-2">RETRO.</span>
           </p>
