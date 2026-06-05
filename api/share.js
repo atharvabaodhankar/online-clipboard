@@ -1,5 +1,4 @@
-import { db, clipboardEntries } from "./db.js";
-import { and, eq, gt, lt } from "drizzle-orm";
+import { redis } from "./db.js";
 
 export default async function handler(req, res) {
   // Add CORS headers
@@ -16,23 +15,17 @@ export default async function handler(req, res) {
     if (!content) return res.status(400).json({ error: "Content is required" });
 
     try {
-      // 1. Lazy Cleanup: Remove expired entries to free up codes
-      await db.delete(clipboardEntries).where(lt(clipboardEntries.expiresAt, new Date()));
-
-      // 2. Generate Unique 4-digit Code (Collision Check)
+      // 1. Generate Unique 4-digit Code (Collision Check in Redis)
       let code;
       let isUnique = false;
       let attempts = 0;
       
       while (!isUnique && attempts < 10) {
         code = Math.floor(1000 + Math.random() * 9000).toString();
-        const existing = await db
-          .select()
-          .from(clipboardEntries)
-          .where(and(eq(clipboardEntries.code, code), gt(clipboardEntries.expiresAt, new Date())))
-          .limit(1);
+        const key = `clipboard:${code}`;
+        const exists = await redis.exists(key);
         
-        if (existing.length === 0) {
+        if (exists === 0) {
           isUnique = true;
         }
         attempts++;
@@ -42,21 +35,17 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "System busy. Please try again later." });
       }
       
-      // 3. Calculate expiry
+      // 2. Calculate expiry
       const timeMap = {
-        "1h": 60 * 60 * 1000,
-        "1d": 24 * 60 * 60 * 1000,
-        "7d": 7 * 24 * 60 * 60 * 1000
+        "1h": 60 * 60,
+        "1d": 24 * 60 * 60,
+        "7d": 7 * 24 * 60 * 60
       };
-      const timeOffset = timeMap[expiresAt] || timeMap["1d"];
-      const calculatedExpiresAt = new Date(Date.now() + timeOffset);
+      const ttlSeconds = timeMap[expiresAt] || timeMap["1d"];
+      const key = `clipboard:${code}`;
 
-      // 4. Insert new entry
-      await db.insert(clipboardEntries).values({ 
-        code, 
-        content, 
-        expiresAt: calculatedExpiresAt 
-      });
+      // 3. Insert new entry in Redis with TTL
+      await redis.set(key, content, { ex: ttlSeconds });
       
       res.status(200).json({ code });
     } catch (err) {
@@ -67,3 +56,4 @@ export default async function handler(req, res) {
     res.status(405).json({ error: "Method not allowed" });
   }
 }
+

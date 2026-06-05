@@ -1,6 +1,5 @@
 // api/fetch.js
-import { db, clipboardEntries } from "./db.js";
-import { eq, and, gt } from "drizzle-orm";
+import { redis } from "./db.js";
 
 export default async function handler(req, res) {
   // Add CORS headers
@@ -17,22 +16,13 @@ export default async function handler(req, res) {
     if (!code) return res.status(400).json({ error: "Code is required" });
 
     try {
-      const result = await db
-        .select()
-        .from(clipboardEntries)
-        .where(
-          and(
-            eq(clipboardEntries.code, code),
-            gt(clipboardEntries.expiresAt, new Date())
-          )
-        )
-        .limit(1);
+      const content = await redis.get(`clipboard:${code}`);
 
-      if (result.length === 0) {
+      if (!content) {
         return res.status(404).json({ error: "Code not found or expired" });
       }
 
-      res.status(200).json({ content: result[0].content });
+      res.status(200).json({ content });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: err.message });
@@ -40,4 +30,4 @@ export default async function handler(req, res) {
   } else {
     res.status(405).json({ error: "Method not allowed" });
   }
-}
+}

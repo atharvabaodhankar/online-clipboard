@@ -1,13 +1,8 @@
 // api/db.js
-import { Client } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { clipboardEntries } from "../src/db/schema.js";  // ✅ correct path
+import { Redis } from "@upstash/redis";
 
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
+export const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-await client.connect();
-
-export const db = drizzle(client);
-export { clipboardEntries };  // <-- make sure to export it here too
