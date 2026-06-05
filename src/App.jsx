@@ -13,8 +13,49 @@ export default function App() {
   const [shareLink, setShareLink] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
+  const [dbStatus, setDbStatus] = useState("loading");
+  const [timeString, setTimeString] = useState("");
 
   const API_URL = import.meta.env.VITE_API_URL;
+
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/status`);
+        const data = await res.json();
+        if (data.status === "ok") {
+          setDbStatus("online");
+        } else {
+          setDbStatus("offline");
+        }
+      } catch (err) {
+        setDbStatus("offline");
+      }
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 30000);
+    return () => clearInterval(interval);
+  }, [API_URL]);
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setTimeString(now.toLocaleTimeString([], { hour12: false }));
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     setClipboards([]);
@@ -29,6 +70,7 @@ export default function App() {
       // ignore
     }
   }, []);
+
 
   const saveClipboard = async () => {
     if (!content || isSaving) return;
@@ -105,50 +147,107 @@ export default function App() {
   return (
     <div className="bg-background text-foreground min-h-screen font-sans selection:bg-primary selection:text-black">
       {/* Top Banner / Decorative Bar */}
-      <div className="bg-black text-white py-1 px-4 overflow-hidden whitespace-nowrap border-b-2 border-black">
-        <div className="animate-marquee inline-block font-head text-[10px] uppercase tracking-widest leading-none">
-          Retro Clipboard v2.0 • Secure End-to-End • Open Source • Built for Speed • No Account Required • 
-          Retro Clipboard v2.0 • Secure End-to-End • Open Source • Built for Speed • No Account Required • 
+      <div className="overflow-hidden border-b-4 border-black bg-black py-2 text-yellow-300 dark:text-yellow-400 font-head text-xs tracking-wider select-none">
+        <div className="flex w-max animate-marquee">
+          <div className="px-4 whitespace-nowrap">
+            ★ RETRO CLIPBOARD V2.0 ✦ SECURE END-TO-END ✦ ZERO TRACKING ✦ NO ACCOUNT REQUIRED ✦ UPSTASH REDIS POWERED ✦ 100% HAND-CRAFTED ✦&nbsp;
+          </div>
+          <div className="px-4 whitespace-nowrap">
+            ★ RETRO CLIPBOARD V2.0 ✦ SECURE END-TO-END ✦ ZERO TRACKING ✦ NO ACCOUNT REQUIRED ✦ UPSTASH REDIS POWERED ✦ 100% HAND-CRAFTED ✦&nbsp;
+          </div>
         </div>
       </div>
 
       {/* Main Navbar */}
-      <header className="border-b-4 border-black px-4 lg:px-8 py-4 lg:py-6 bg-primary shadow-[8px_8px_0_0_rgba(0,0,0,1)] sticky top-0 z-50 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center space-x-3 group cursor-pointer">
-          <div className="bg-black p-2 border-2 border-white shadow-[2px_2px_0_0_rgba(255,255,255,1)] group-hover:bg-accent transition-colors">
-            <Clipboard size={24} className="text-white group-hover:text-black transition-colors" />
+      <header className="sticky top-0 z-50 bg-primary dark:bg-card border-b-4 border-black shadow-[4px_4px_0_0_rgba(0,0,0,1)] dark:shadow-[4px_4px_0_0_#3a3a3a] transition-colors">
+        {/* Menu Bar (Classic OS System style) */}
+        <div className="bg-black text-white px-4 py-1.5 flex justify-between items-center text-[10px] sm:text-xs font-mono border-b-2 border-black">
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <span className="font-bold tracking-wider text-yellow-300">SYSTEM v2.0</span>
+            <span className="opacity-50">|</span>
+            <button 
+              onClick={() => showAlertDialog("Retro Clipboard is a 100% serverless, zero-tracking, temporary copy-paste tool. Built with Redis & React.")} 
+              className="hover:text-yellow-300 transition-colors uppercase font-bold cursor-pointer bg-transparent border-none p-0 outline-none"
+            >
+              About
+            </button>
+            <span className="opacity-50">|</span>
+            <button 
+              onClick={() => showAlertDialog("To save a clip, paste your text and select an expiration. Share the generated 4-digit code. To fetch, enter a code in the Fetch box.")} 
+              className="hover:text-yellow-300 transition-colors uppercase font-bold cursor-pointer bg-transparent border-none p-0 outline-none"
+            >
+              Help
+            </button>
           </div>
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-head uppercase tracking-tighter text-black leading-none mt-1">
-            Retro<span className="bg-black text-primary px-1 ml-1">Clipboard</span>
-          </h1>
+          
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            {/* Real-time DB status indicator */}
+            <div className="flex items-center space-x-1.5 bg-neutral-900 border border-neutral-700 px-2 py-0.5 rounded-xs">
+              <span className={`inline-block w-2 h-2 rounded-full ${
+                dbStatus === "online" ? "bg-green-500 animate-pulse" : dbStatus === "offline" ? "bg-red-500" : "bg-yellow-500 animate-pulse"
+              }`} />
+              <span className="font-bold text-[8px] sm:text-[9px] uppercase tracking-wider text-white">
+                {dbStatus === "online" ? "REDIS: ONLINE" : dbStatus === "offline" ? "REDIS: OFFLINE" : "REDIS: LINKING"}
+              </span>
+            </div>
+            
+            {/* Clock */}
+            <span className="font-mono font-bold tracking-widest text-yellow-300 select-none bg-neutral-900 px-2 py-0.5 border border-neutral-700 hidden sm:inline">
+              {timeString || "00:00:00"}
+            </span>
+          </div>
         </div>
-        
-        <nav className="flex items-center gap-3 md:gap-6">
-        
-          <p className="font-head text-black text-xs md:text-sm italic font-bold">
-            FAST. SECURE. <span className="underline decoration-2">RETRO.</span>
-          </p>
-        </nav>
+
+        {/* Main Header Content */}
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-4 group cursor-pointer">
+            <div className="bg-black text-white dark:bg-yellow-300 dark:text-black p-2.5 border-2 border-black dark:border-white shadow-[3px_3px_0_0_rgba(0,0,0,1)] dark:shadow-[3px_3px_0_0_#ffdb33] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-all">
+              <Clipboard size={24} />
+            </div>
+            <div>
+              <h1 className="text-xl md:text-2xl font-head uppercase tracking-tighter text-black dark:text-white leading-none mt-1">
+                Retro<span className="bg-black text-primary dark:bg-yellow-300 dark:text-black px-1.5 ml-1">Clipboard</span>
+              </h1>
+              <p className="text-[9px] uppercase font-mono tracking-widest text-muted-foreground dark:text-neutral-400 mt-1 font-bold">
+                Hand-crafted Key-Value Share
+              </p>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="flex items-center gap-4">
+            {/* Dark Mode Switch Button */}
+            <button 
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              className="relative flex items-center justify-between bg-black text-white dark:bg-white dark:text-black font-head text-[10px] sm:text-xs uppercase px-3 py-2 border-2 border-black shadow-[3px_3px_0_0_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_0_rgba(0,0,0,1)] transition-all cursor-pointer select-none"
+            >
+              <span className="mr-2 font-bold">{theme === "light" ? "DARK MODE" : "LIGHT MODE"}</span>
+              <div className="w-3.5 h-3.5 bg-primary dark:bg-black border border-black rounded-xs flex items-center justify-center">
+                <span className="text-[8px]">{theme === "light" ? "○" : "●"}</span>
+              </div>
+            </button>
+          </div>
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto p-4 lg:p-8 space-y-12">
         {/* Input Section */}
-        <section className="bg-card border-4 border-black shadow-xl p-6 relative">
-          <div className="absolute -top-4 -left-4 bg-black text-white px-4 py-1 font-head text-sm uppercase">
+        <section className="bg-card border-4 border-black shadow-xl dark:shadow-[8px_8px_0_0_#ffdb33] p-6 relative transition-all">
+          <div className="absolute -top-4 -left-4 bg-black text-white dark:bg-yellow-300 dark:text-black px-4 py-1 font-head text-sm uppercase border-2 border-black">
             New Clip
           </div>
           <div className="space-y-4">
             <textarea
-              className="w-full p-4 border-2 border-black bg-white focus:bg-accent outline-hidden transition-colors min-h-[160px] font-medium placeholder:text-muted-foreground/50"
+              className="w-full p-4 border-2 border-black bg-white dark:bg-neutral-900 text-black dark:text-white focus:bg-accent dark:focus:bg-neutral-800 outline-hidden transition-colors min-h-[160px] font-medium placeholder:text-muted-foreground/50"
               placeholder="Paste your content here..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
             />
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
-                <label className="block font-head text-xs uppercase mb-1">Expiration</label>
+                <label className="block font-head text-xs uppercase mb-1 dark:text-white">Expiration</label>
                 <select
-                  className="w-full p-3 border-2 border-black bg-white font-head appearance-none"
+                  className="w-full p-3 border-2 border-black bg-white dark:bg-neutral-900 text-black dark:text-white font-head appearance-none"
                   value={expiry}
                   onChange={(e) => setExpiry(e.target.value)}
                 >
@@ -173,13 +272,13 @@ export default function App() {
 
         {/* Display Fetched Content */}
         {fetchedContent && (
-          <section className="bg-card border-4 border-black shadow-xl p-6 relative animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <div className="absolute -top-4 -left-4 bg-secondary text-white px-4 py-1 font-head text-sm uppercase">
+          <section className="bg-card border-4 border-black shadow-xl dark:shadow-[8px_8px_0_0_#ffdb33] p-6 relative animate-in fade-in slide-in-from-bottom-4 duration-300 transition-all">
+            <div className="absolute -top-4 -left-4 bg-secondary text-white dark:bg-primary dark:text-black px-4 py-1 font-head text-sm uppercase border-2 border-black">
               Fetched Result
             </div>
-            <div className="relative border-2 border-black bg-white">
+            <div className="relative border-2 border-black bg-white dark:bg-neutral-900">
               <textarea
-                className="w-full p-4 bg-transparent resize-none outline-none min-h-[160px] font-medium"
+                className="w-full p-4 bg-transparent text-black dark:text-white resize-none outline-none min-h-[160px] font-medium"
                 readOnly
                 value={fetchedContent}
               />
@@ -197,16 +296,16 @@ export default function App() {
         )}
 
         {/* Fetch by Code Section */}
-        <section className="bg-white border-4 border-black shadow-lg p-6 relative">
-          <div className="absolute -top-4 -left-4 bg-accent text-black px-4 py-1 font-head text-sm uppercase border-2 border-black">
+        <section className="bg-card border-4 border-black shadow-lg dark:shadow-[6px_6px_0_0_#ffdb33] p-6 relative transition-all">
+          <div className="absolute -top-4 -left-4 bg-accent text-black dark:bg-yellow-300 dark:text-black px-4 py-1 font-head text-sm uppercase border-2 border-black">
             Fetch Cache
           </div>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground dark:text-neutral-400" size={20} />
               <input
                 type="text"
-                className="w-full pl-10 pr-4 py-3 border-2 border-black font-head placeholder:opacity-50"
+                className="w-full pl-10 pr-4 py-3 border-2 border-black bg-white dark:bg-neutral-900 text-black dark:text-white font-head placeholder:opacity-50 transition-colors"
                 placeholder="ENTER CODE..."
                 value={fetchCode}
                 onChange={(e) => setFetchCode(e.target.value)}
@@ -226,12 +325,12 @@ export default function App() {
         {/* Recent Clipboards */}
         {clipboards.length > 0 && (
           <section className="space-y-6 pb-12">
-            <h2 className="text-3xl font-head uppercase inline-block border-b-4 border-primary">
+            <h2 className="text-3xl font-head uppercase inline-block border-b-4 border-primary dark:text-white">
               Recent Activity
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {clipboards.map((c) => (
-                <div key={c.code} className="border-4 border-black p-4 bg-white shadow-md hover:translate-x-1 hover:-translate-y-1 transition-transform group">
+                <div key={c.code} className="border-4 border-black p-4 bg-card shadow-md dark:shadow-[4px_4px_0_0_#ffdb33] hover:translate-x-1 hover:-translate-y-1 transition-transform group">
                   <div className="flex justify-between items-start mb-4">
                     <div className="bg-black text-white px-2 py-0.5 text-xs font-head">
                       {c.code}
@@ -255,7 +354,7 @@ export default function App() {
                       </Button>
                     </div>
                   </div>
-                  <p className="text-sm font-medium line-clamp-3 text-muted-foreground group-hover:text-black transition-colors">
+                  <p className="text-sm font-medium line-clamp-3 text-muted-foreground dark:text-neutral-300 group-hover:text-black dark:group-hover:text-white transition-colors">
                     {c.content}
                   </p>
                 </div>
@@ -268,8 +367,8 @@ export default function App() {
       {/* Modal Dialog */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-white border-4 border-black shadow-[12px_12px_0_0_rgba(0,0,0,1)] max-w-sm w-full p-8 text-center animate-in zoom-in-95 duration-200">
-            <p className="text-xl font-head mb-8 uppercase leading-tight">{modalMessage}</p>
+          <div className="bg-white dark:bg-neutral-900 border-4 border-black dark:border-white shadow-[12px_12px_0_0_rgba(0,0,0,1)] dark:shadow-[12px_12px_0_0_#ffdb33] max-w-sm w-full p-8 text-center animate-in zoom-in-95 duration-200">
+            <p className="text-xl font-head mb-8 uppercase leading-tight text-black dark:text-white">{modalMessage}</p>
             <Button
               onClick={() => setShowModal(false)}
               className="w-full py-6 text-xl"
