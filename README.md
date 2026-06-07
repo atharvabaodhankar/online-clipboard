@@ -1,11 +1,11 @@
-# ✦ RetroClipboard ✦
+# ✦ OClip ✦
 
 [![Vercel Deployment](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=flat-square&logo=vercel)](https://oclip.vercel.app)
 [![Redis](https://img.shields.io/badge/Powered%20by-Upstash%20Redis-red?style=flat-square&logo=redis)](https://upstash.com)
 [![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-blue?style=flat-square&logo=react)](https://react.dev)
 [![TailwindCSS](https://img.shields.io/badge/Styling-Tailwind%20v4-38bdf8?style=flat-square&logo=tailwind-css)](https://tailwindcss.com)
 
-**RetroClipboard** is a beautifully designed, neo-brutalist styled online clipboard for temporary text and file sharing. Built with speed, security, and simplicity in mind, it lets you share snippets and files across devices using lightweight 4-digit codes without requiring any registration or accounts.
+**OClip** is a beautifully designed, neo-brutalist styled online clipboard for temporary text and file sharing. Built with speed, security, and simplicity in mind, it lets you share snippets and files across devices using lightweight 4-digit codes without requiring any registration or accounts.
 
 🌐 **Live Demo:** [https://oclip.vercel.app](https://oclip.vercel.app)
 
@@ -82,7 +82,7 @@ online-clipboard/
 
 ## 🚀 Getting Started
 
-Follow these instructions to run RetroClipboard on your local machine:
+Follow these instructions to run OClip on your local machine:
 
 ### 1. Clone the Repository
 ```bash
@@ -201,5 +201,29 @@ npm run dev
 
 ---
 
+## 🚀 OClip v2 Roadmap & Vision
+
+### Vision
+Transform OClip from a temporary text-sharing tool into a universal temporary sharing platform supporting text and rich file sharing while maintaining:
+- No accounts / No tracking
+- Temporary, self-expiring storage
+- Fast sharing via 4-digit codes or links
+
+### Migration Timeline & Phase Execution
+- [x] **Phase 1: File Sharing & storage.to Integration**
+  - Implement client-side 3-step R2 upload.
+  - Store metadata (fileUrl, rawUrl, filename, size) in Redis.
+- [x] **Phase 2: QR Code Generation & Routing**
+  - Generate client-side QRs for shareable URLs.
+  - Implement `/t/:code` and `/f/:code` client router mappings.
+- [x] **Phase 3: Burn After Read & View Limits**
+  - Implement view limits and automated database key deletion.
+- [x] **Phase 4: Drag & Drop Uploads & Previews**
+  - Implement Drag & Drop panel using `react-dropzone`.
+  - Preview file support for images, text, and PDF.
+
+---
+
 ## 🛡️ License
 This project is licensed under the MIT License. Feel free to use, modify, and distribute it.
+
