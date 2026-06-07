@@ -29,6 +29,15 @@ function formatBytes(bytes, decimals = 2) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 }
 
+function getOrCreateVisitorToken() {
+  let token = localStorage.getItem("visitor_token");
+  if (!token) {
+    token = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem("visitor_token", token);
+  }
+  return token;
+}
+
 function TextPreview({ fileUrl }) {
   const [text, setText] = useState("Loading preview...");
   useEffect(() => {
@@ -225,36 +234,84 @@ export default function App() {
     setIsSaving(true);
     
     try {
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      formData.append("expires", expiry === "1h" ? "1h" : expiry === "7d" ? "7d" : "1d");
-      if (burnAfterRead) {
-        formData.append("autoDelete", "true");
+      const visitorToken = getOrCreateVisitorToken();
+
+      // Step 1: Initialize Upload
+      const initRes = await fetch("https://storage.to/api/upload/init", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Visitor-Token": visitorToken
+        },
+        body: JSON.stringify({
+          filename: selectedFile.name,
+          content_type: selectedFile.type || "application/octet-stream",
+          size: selectedFile.size
+        })
+      });
+
+      if (!initRes.ok) {
+        throw new Error(`Upload initialization failed with status ${initRes.status}`);
       }
 
-      const uploadRes = await fetch("https://file.io", {
-        method: "POST",
-        body: formData
+      const initData = await initRes.json();
+      if (!initData.success) {
+        throw new Error(initData.error || "Failed to initialize upload on storage.to");
+      }
+
+      const { upload_url, r2_key } = initData;
+
+      // Step 2: Upload File Bytes
+      const uploadRes = await fetch(upload_url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": selectedFile.type || "application/octet-stream"
+        },
+        body: selectedFile
       });
-      
+
       if (!uploadRes.ok) {
-        throw new Error("Failed to upload file to storage.");
+        throw new Error(`File upload failed with status ${uploadRes.status}`);
       }
-      
-      const uploadData = await uploadRes.json();
-      
-      if (!uploadData.success) {
-        throw new Error(uploadData.message || "Failed to upload to file.io");
+
+      // Step 3: Confirm Upload
+      const confirmRes = await fetch("https://storage.to/api/upload/confirm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Visitor-Token": visitorToken
+        },
+        body: JSON.stringify({
+          filename: selectedFile.name,
+          size: selectedFile.size,
+          content_type: selectedFile.type || "application/octet-stream",
+          r2_key: r2_key
+        })
+      });
+
+      if (!confirmRes.ok) {
+        throw new Error(`Upload confirmation failed with status ${confirmRes.status}`);
       }
-      
+
+      const confirmData = await confirmRes.json();
+      if (!confirmData.success || !confirmData.file) {
+        throw new Error(confirmData.error || "Failed to confirm upload on storage.to");
+      }
+
+      const { file: fileDetails } = confirmData;
+
+      // Step 4: Share details with OClip backend
       const shareRes = await fetch(`${API_URL}/api/share`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "file",
-          fileName: selectedFile.name,
-          fileUrl: uploadData.link,
-          size: formatBytes(selectedFile.size),
+          provider: "storage.to",
+          fileId: fileDetails.id,
+          fileUrl: fileDetails.url,
+          rawUrl: fileDetails.raw_url,
+          fileName: fileDetails.filename,
+          size: formatBytes(fileDetails.size),
           expiresAt: expiry,
           maxViews: burnAfterRead ? 1 : 999
         })
@@ -265,9 +322,12 @@ export default function App() {
       if (shareData.code) {
         const newEntry = {
           type: "file",
-          fileName: selectedFile.name,
-          fileUrl: uploadData.link,
-          size: formatBytes(selectedFile.size),
+          provider: "storage.to",
+          fileId: fileDetails.id,
+          fileUrl: fileDetails.url,
+          rawUrl: fileDetails.raw_url,
+          fileName: fileDetails.filename,
+          size: formatBytes(fileDetails.size),
           code: shareData.code,
           expiresAt: expiry,
           burnAfterRead
@@ -646,9 +706,9 @@ export default function App() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => copyToClipboard(c.type === "file" ? c.fileUrl : c.content)}
+                            onClick={() => copyToClipboard(c.type === "file" ? (c.rawUrl || c.fileUrl) : c.content)}
                             className="h-8 w-8 hover:bg-primary"
-                            title={c.type === "file" ? "Copy download link" : "Copy text content"}
+                            title={c.type === "file" ? "Copy direct download link" : "Copy text content"}
                           >
                             <Copy size={14} />
                           </Button>
@@ -728,7 +788,7 @@ export default function App() {
 
                         <div className="flex gap-2 w-full sm:w-auto shrink-0">
                           <a 
-                            href={fetchedRecord.fileUrl} 
+                            href={fetchedRecord.rawUrl || fetchedRecord.fileUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="flex-1 sm:flex-none"
@@ -744,7 +804,7 @@ export default function App() {
                       {/* Preview rendering */}
                       <div className="space-y-2">
                         <h3 className="font-head text-xs uppercase dark:text-white">File Preview</h3>
-                        <FilePreview fileUrl={fetchedRecord.fileUrl} fileName={fetchedRecord.fileName} />
+                        <FilePreview fileUrl={fetchedRecord.rawUrl || fetchedRecord.fileUrl} fileName={fetchedRecord.fileName} />
                       </div>
                     </div>
                   ) : (

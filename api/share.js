@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const { type = "text", content, fileName, fileUrl, size, expiresAt, maxViews = 999 } = req.body;
+    const { type = "text", content, fileName, fileUrl, rawUrl, fileId, provider, size, expiresAt, maxViews = 999 } = req.body;
 
     // Validation
     if (type === "text" && !content) {
@@ -64,8 +64,11 @@ export default async function handler(req, res) {
       if (type === "text") {
         record.content = content;
       } else {
+        record.provider = provider || "storage.to";
+        record.fileId = fileId;
         record.fileName = fileName;
         record.fileUrl = fileUrl;
+        record.rawUrl = rawUrl || fileUrl;
         record.size = size || "Unknown size";
       }
 
