@@ -5,9 +5,20 @@
 [![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-blue?style=flat-square&logo=react)](https://react.dev)
 [![TailwindCSS](https://img.shields.io/badge/Styling-Tailwind%20v4-38bdf8?style=flat-square&logo=tailwind-css)](https://tailwindcss.com)
 
-**OClip** is a beautifully designed, neo-brutalist styled online clipboard for temporary text and file sharing. Built with speed, security, and simplicity in mind, it lets you share snippets and files across devices using lightweight 4-digit codes without requiring any registration or accounts.
+**OClip** is a lightweight, zero-tracking, account-free temporary text and file-sharing platform styled with a retro neo-brutalist aesthetic. Designed to be fast and secure, it allows you to transfer snippets and files across different devices using simple 4-digit codes or dynamic QR codes.
 
 🌐 **Live Demo:** [https://oclip.vercel.app](https://oclip.vercel.app)
+
+---
+
+## 💡 Why OClip? (The College Lab Use Case)
+
+Public terminals (such as college computer labs, library systems, or office presentation decks) present a major security hazard. Logins, emails, and drive accounts are easily left active, and personal data can be exposed. 
+
+**OClip solves this:**
+- **Zero Logins:** Share code snippets or files without entering emails or passwords on public computers.
+- **Hassle-Free Transfer:** Paste your text or drop your ZIP files from the lab terminal, grab a quick 4-digit code, go home, and download your items instantly on your personal system.
+- **Self-Cleaning:** Strict expirations and "Burn After Read" features ensure your files disappear automatically from storage immediately after you retrieve them.
 
 ---
 
@@ -15,40 +26,31 @@
 
 ![OClip System Architecture](./public/oclip_architecture.png)
 
-The app utilizes a dual-tier storage strategy:
-1. **Metadata Registry (Upstash Redis):** Store lightweight metadata records (types, view limits, expiration timestamps, filenames, and links) mapped to a unique 4-digit code.
-2. **Binary Storage (storage.to / Cloudflare R2):** Upload raw file bytes directly from the client browser to Cloudflare R2 (brokered by storage.to) to bypass serverless payload limits.
+OClip implements a secure, low-latency, dual-tier storage strategy to support massive file sharing at zero cost:
+1. **Metadata Registry (Upstash Redis):** Stores session records (containing download counters, view limits, expiry timestamps, filenames, and download URLs) mapped to a unique 4-digit numeric code.
+2. **Binary Storage (storage.to / Cloudflare R2):** Uploads raw file bytes directly from the client browser to Cloudflare R2 storage (brokered by storage.to). This completely bypasses Vercel’s serverless payload limits (4.5MB) and timeouts, supporting uploads up to 25GB.
 
 ---
 
 ## ✨ Features
 
-- **Neo-Brutalist Aesthetic:** Vibrant contrast, bold borders, retro clock, and micro-interactions powered by Framer Motion.
-- **Universal Paste & Upload:** Supports raw text clips and full file uploads (up to 25GB) via the modern drag-and-drop zone.
-- **Instant QR Code Sharing:** Automatically generates high-quality QR codes for shared URLs with easy download actions.
-- **Fast 4-Digit Retrievals:** Retrieve any text or file instantly by visiting the `/t/:code` or `/f/:code` URLs, or typing the code into the cache retrieval deck.
-- **Burn-After-Read Security:** Toggle "Burn After Read" to destroy records from the database immediately after they are retrieved once.
-- **Custom Expiration TTL:** Choose how long files and clips persist online (1 Hour, 1 Day, or 7 Days).
-- **Responsive Previews:** Rich, inline previews for images, text, and PDF files.
-- **Real-Time DB Status:** Inline system health monitor checking Upstash Redis connection in real-time.
-- **Zero Tracking:** Fully serverless backend with database-level expirations. No tracking cookies, no registration.
+- **Neo-Brutalist Design:** Styled with bold borders, contrasting palettes, a ticking retro system clock, and micro-animations.
+- **Universal Dropzone:** Drag & drop any file (up to 25GB) or paste raw text clips to share immediately.
+- **Dynamic Routing:** Direct links are mapped to client-side path routes `/t/:code` (text clip view) and `/f/:code` (file preview & download deck).
+- **Responsive Previews:** Inline viewer for images (`png`, `jpg`/`jpeg`, `gif`, `webp`), raw text (`txt`), and documents (`pdf`). Unsupported files display a clean download prompt.
+- **Burn-After-Read:** Destroy data instantly from the server database after the first retrieval.
+- **Custom Expirations:** Select database-level TTL thresholds (1 Hour, 1 Day, or 7 Days).
+- **QR Sharing:** Generates QR codes on-the-fly for direct mobile scans and downloads.
+- **Real-Time DB Status:** Ticker indicating Redis connection state.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend:**
-  - [React 19](https://react.dev/) + [Vite](https://vite.dev/)
-  - [Tailwind CSS v4](https://tailwindcss.com/)
-  - [Framer Motion](https://www.framer.com/motion/) (for UI transitions and micro-animations)
-  - [react-dropzone](https://react-dropzone.js.org/) (for drag-and-drop file selectors)
-  - [qrcode](https://www.npmjs.com/package/qrcode) (for client-side QR generation)
-- **Backend (Serverless):**
-  - [Vercel Serverless Functions](https://vercel.com/docs/functions) (JavaScript API routes under `/api`)
-- **Database:**
-  - [Upstash Redis](https://upstash.com/) (Serverless Redis for low-latency temporary key-value storage)
-- **Storage:**
-  - [storage.to](https://storage.to) (Cloudflare R2-backed storage supporting anonymous uploads up to 25GB)
+- **Frontend:** React 19, Vite, Tailwind CSS v4, Framer Motion, `react-dropzone`, `qrcode`.
+- **Backend:** Vercel Serverless Functions.
+- **Database:** Upstash Redis (Serverless key-value store).
+- **File Host:** storage.to (Cloudflare R2-backed storage).
 
 ---
 
@@ -59,23 +61,21 @@ online-clipboard/
 ├── api/                  # Vercel Serverless API Functions
 │   ├── db.js             # Upstash Redis client initialization
 │   ├── share.js          # POST - Saves clip with unique 4-digit code + TTL
-│   ├── fetch.js          # POST - Fetches clip content using the code and tracks views
+│   ├── fetch.js          # POST - Fetches clip content and deletes if maxViews reached
 │   └── status.js         # GET - Database connectivity health check
 ├── public/               # Static assets
 │   ├── oclip_architecture.png # Generated architecture diagram
 │   └── vite.svg
 ├── src/                  # React Frontend Application
-│   ├── assets/           # Static asset folders
 │   ├── components/       # UI Components
-│   │   └── retroui/      # Retro-styled UI buttons, widgets
-│   ├── lib/              # Utility helpers
+│   │   └── retroui/      # Retro-styled UI buttons
 │   ├── App.jsx           # Main application interface and upload flows
 │   ├── index.css         # Styling system containing neo-brutalist theme tokens
 │   └── main.jsx          # Entrypoint for React 19
 ├── index.html            # HTML layout
 ├── vercel.json           # Vercel client-side routing rewrites
 ├── vite.config.ts        # Vite + Tailwind compiler configs
-└── package.json          # Node dependencies & project scripts
+└── package.json          # Node dependencies & scripts
 ```
 
 ---
@@ -91,7 +91,7 @@ cd online-clipboard
 ```
 
 ### 2. Configure Environment Variables
-Create a `.env` (or `.env.local`) file in the root directory and configure the following variables:
+Create a `.env` (or `.env.local`) file in the root directory:
 
 ```env
 # Frontend API URL configuration
@@ -108,7 +108,7 @@ npm install
 ```
 
 ### 4. Run Locally
-To run the frontend dev server along with Vercel serverless functions locally, install the [Vercel CLI](https://vercel.com/cli) and run:
+To run the frontend dev server along with Vercel serverless functions locally:
 
 ```bash
 # Start Vercel dev environment (spins up frontend and local api handler)
@@ -132,8 +132,8 @@ npm run dev
   {
     "type": "text",
     "content": "Text to be saved",
-    "expiresAt": "1d", // Optional: "1h" | "1d" | "7d"
-    "maxViews": 999    // Optional: set to 1 for Burn-After-Read
+    "expiresAt": "1d",
+    "maxViews": 999
   }
   ```
 * **Request Body (File):**
@@ -201,29 +201,5 @@ npm run dev
 
 ---
 
-## 🚀 OClip v2 Roadmap & Vision
-
-### Vision
-Transform OClip from a temporary text-sharing tool into a universal temporary sharing platform supporting text and rich file sharing while maintaining:
-- No accounts / No tracking
-- Temporary, self-expiring storage
-- Fast sharing via 4-digit codes or links
-
-### Migration Timeline & Phase Execution
-- [x] **Phase 1: File Sharing & storage.to Integration**
-  - Implement client-side 3-step R2 upload.
-  - Store metadata (fileUrl, rawUrl, filename, size) in Redis.
-- [x] **Phase 2: QR Code Generation & Routing**
-  - Generate client-side QRs for shareable URLs.
-  - Implement `/t/:code` and `/f/:code` client router mappings.
-- [x] **Phase 3: Burn After Read & View Limits**
-  - Implement view limits and automated database key deletion.
-- [x] **Phase 4: Drag & Drop Uploads & Previews**
-  - Implement Drag & Drop panel using `react-dropzone`.
-  - Preview file support for images, text, and PDF.
-
----
-
 ## 🛡️ License
 This project is licensed under the MIT License. Feel free to use, modify, and distribute it.
-
