@@ -13,8 +13,10 @@
     "@upstash/redis": "^1.38.0",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.23.22",
+    "qrcode": "^1.5.4",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-dropzone": "^15.0.0",
     "tailwindcss": "^4.1.14"
   },
   "devDependencies": {

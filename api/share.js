@@ -11,8 +11,15 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const { content, expiresAt } = req.body;
-    if (!content) return res.status(400).json({ error: "Content is required" });
+    const { type = "text", content, fileName, fileUrl, size, expiresAt, maxViews = 999 } = req.body;
+
+    // Validation
+    if (type === "text" && !content) {
+      return res.status(400).json({ error: "Content is required for text sharing" });
+    }
+    if (type === "file" && (!fileName || !fileUrl)) {
+      return res.status(400).json({ error: "fileName and fileUrl are required for file sharing" });
+    }
 
     try {
       // 1. Generate Unique 4-digit Code (Collision Check in Redis)
@@ -44,8 +51,26 @@ export default async function handler(req, res) {
       const ttlSeconds = timeMap[expiresAt] || timeMap["1d"];
       const key = `clipboard:${code}`;
 
-      // 3. Insert new entry in Redis with TTL
-      await redis.set(key, content, { ex: ttlSeconds });
+      // 3. Construct the record
+      const record = {
+        code,
+        type,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + (ttlSeconds * 1000),
+        views: 0,
+        maxViews: Number(maxViews) || 999,
+      };
+
+      if (type === "text") {
+        record.content = content;
+      } else {
+        record.fileName = fileName;
+        record.fileUrl = fileUrl;
+        record.size = size || "Unknown size";
+      }
+
+      // 4. Insert new entry in Redis with TTL
+      await redis.set(key, JSON.stringify(record), { ex: ttlSeconds });
       
       res.status(200).json({ code });
     } catch (err) {
@@ -56,4 +81,5 @@ export default async function handler(req, res) {
     res.status(405).json({ error: "Method not allowed" });
   }
 }
+
 

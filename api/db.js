@@ -1,3 +1,4 @@
+/* global process */
 // api/db.js
 import { Redis } from "@upstash/redis";
 

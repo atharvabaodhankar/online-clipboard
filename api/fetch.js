@@ -16,13 +16,48 @@ export default async function handler(req, res) {
     if (!code) return res.status(400).json({ error: "Code is required" });
 
     try {
-      const content = await redis.get(`clipboard:${code}`);
+      const storedVal = await redis.get(`clipboard:${code}`);
 
-      if (!content) {
+      if (!storedVal) {
         return res.status(404).json({ error: "Code not found or expired" });
       }
 
-      res.status(200).json({ content });
+      let record;
+      try {
+        record = typeof storedVal === "string" ? JSON.parse(storedVal) : storedVal;
+        // Make sure it has type, views, maxViews
+        if (!record.type) {
+          throw new Error("Invalid schema");
+        }
+      } catch {
+        // Legacy fallback
+        record = {
+          code,
+          type: "text",
+          content: typeof storedVal === "string" ? storedVal : JSON.stringify(storedVal),
+          views: 0,
+          maxViews: 999,
+          createdAt: Date.now(),
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000
+        };
+      }
+
+      // Update views
+      record.views = (record.views || 0) + 1;
+
+      // Handle deletion if maxViews reached
+      const key = `clipboard:${code}`;
+      if (record.maxViews && record.views >= record.maxViews) {
+        await redis.del(key);
+      } else {
+        const remainingTtl = Math.max(1, Math.round((record.expiresAt - Date.now()) / 1000));
+        await redis.set(key, JSON.stringify(record), { ex: remainingTtl });
+      }
+
+      res.status(200).json({
+        content: record.content || "",
+        record
+      });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: err.message });
