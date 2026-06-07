@@ -1,13 +1,13 @@
 # ✦ RetroClipboard ✦
 
-[![Vercel Deployment](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=flat-square&logo=vercel)](https://online-clipboard-rm16.vercel.app)
+[![Vercel Deployment](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=flat-square&logo=vercel)](https://oclip.vercel.app)
 [![Redis](https://img.shields.io/badge/Powered%20by-Upstash%20Redis-red?style=flat-square&logo=redis)](https://upstash.com)
 [![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-blue?style=flat-square&logo=react)](https://react.dev)
 [![TailwindCSS](https://img.shields.io/badge/Styling-Tailwind%20v4-38bdf8?style=flat-square&logo=tailwind-css)](https://tailwindcss.com)
 
 **RetroClipboard** is a beautifully designed, neo-brutalist styled online clipboard for temporary text and file sharing. Built with speed, security, and simplicity in mind, it lets you share snippets and files across devices using lightweight 4-digit codes without requiring any registration or accounts.
 
-🌐 **Live Demo:** [https://online-clipboard-rm16.vercel.app](https://online-clipboard-rm16.vercel.app)
+🌐 **Live Demo:** [https://oclip.vercel.app](https://oclip.vercel.app)
 
 ---
 
