@@ -1,0 +1,32 @@
+export default async function handler(req, res) {
+  // CORS Headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Visitor-Token, x-visitor-token');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const visitorToken = req.headers['x-visitor-token'] || req.headers['X-Visitor-Token'];
+    const response = await fetch('https://storage.to/api/upload/init', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(visitorToken ? { 'X-Visitor-Token': visitorToken } : {})
+      },
+      body: typeof req.body === 'string' ? req.body : JSON.stringify(req.body)
+    });
+
+    const data = await response.json();
+    return res.status(response.status).json(data);
+  } catch (err) {
+    console.error('upload-init proxy error:', err);
+    return res.status(500).json({ error: err.message || 'Internal proxy error' });
+  }
+}

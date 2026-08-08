@@ -237,7 +237,7 @@ export default function App() {
       const visitorToken = getOrCreateVisitorToken();
 
       // Step 1: Initialize Upload
-      const initRes = await fetch("https://storage.to/api/upload/init", {
+      const initRes = await fetch(`${API_URL}/api/upload-init`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -275,7 +275,7 @@ export default function App() {
       }
 
       // Step 3: Confirm Upload
-      const confirmRes = await fetch("https://storage.to/api/upload/confirm", {
+      const confirmRes = await fetch(`${API_URL}/api/upload-confirm`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
