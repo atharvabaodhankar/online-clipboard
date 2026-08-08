@@ -14,7 +14,9 @@ import {
   Eye, 
   EyeOff, 
   ArrowLeft,
-  AlertTriangle
+  AlertTriangle,
+  Share2,
+  Image as ImageIcon
 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import QRCode from "qrcode";
@@ -410,6 +412,130 @@ export default function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleNativeShare = async ({ title, text, url }) => {
+    const shareUrl = url || window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title || "O-Clip Share",
+          text: text || "Access this shared item on Online Clipboard using code:",
+          url: shareUrl
+        });
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Native share error:", err);
+          copyToClipboard(shareUrl);
+        }
+      }
+    } else {
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  const generateAndDownloadShareCard = async (code, type, url, qrCodeUrl) => {
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 600;
+      canvas.height = 720;
+      const ctx = canvas.getContext("2d");
+
+      // Card Background
+      ctx.fillStyle = "#f4f4f5";
+      ctx.fillRect(0, 0, 600, 720);
+
+      // Outer Retro Border
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = "#000000";
+      ctx.strokeRect(12, 12, 576, 696);
+
+      // Shadow for Header Banner
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(44, 44, 512, 70);
+
+      // Header Banner Box
+      ctx.fillStyle = "#ffdb33";
+      ctx.fillRect(36, 36, 512, 70);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#000000";
+      ctx.strokeRect(36, 36, 512, 70);
+
+      // Header Title Text
+      ctx.fillStyle = "#000000";
+      ctx.font = "900 26px 'Courier New', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("★ OCLIP SECURE CLIPBOARD ★", 292, 78);
+
+      // Shadow for Code Box
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(52, 144, 496, 120);
+
+      // Code Box
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(44, 136, 496, 120);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#000000";
+      ctx.strokeRect(44, 136, 496, 120);
+
+      // Code Label
+      ctx.fillStyle = "#52525b";
+      ctx.font = "700 14px 'Courier New', monospace";
+      ctx.fillText(`SECRET 4-DIGIT CODE (${(type || "ITEM").toUpperCase()})`, 292, 166);
+
+      // Code Numbers
+      ctx.fillStyle = "#000000";
+      ctx.font = "900 58px 'Courier New', monospace";
+      ctx.fillText(code, 292, 230);
+
+      // QR Code Outer Box
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(172, 280, 240, 240);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#000000";
+      ctx.strokeRect(172, 280, 240, 240);
+
+      // Draw QR Code Image
+      if (qrCodeUrl) {
+        const qrImg = new Image();
+        qrImg.crossOrigin = "anonymous";
+        await new Promise((resolve, reject) => {
+          qrImg.onload = resolve;
+          qrImg.onerror = reject;
+          qrImg.src = qrCodeUrl;
+        });
+        ctx.drawImage(qrImg, 182, 290, 220, 220);
+      }
+
+      // Link Footer Box
+      ctx.fillStyle = "#e4e4e7";
+      ctx.fillRect(44, 545, 496, 50);
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#000000";
+      ctx.strokeRect(44, 545, 496, 50);
+
+      ctx.fillStyle = "#000000";
+      ctx.font = "700 15px 'Courier New', monospace";
+      ctx.fillText(url, 292, 576);
+
+      // Instructions Footer
+      ctx.fillStyle = "#71717a";
+      ctx.font = "600 13px 'Courier New', monospace";
+      ctx.fillText("SCAN OR ENTER CODE AT OCLIP.VERCEL.APP", 292, 645);
+
+      // Save Card PNG Trigger
+      const dataUrl = canvas.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `oclip-share-card-${code}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showAlertDialog("Retro Share Card saved!");
+    } catch (e) {
+      console.error("Error generating share card:", e);
+      showAlertDialog("Failed to generate share card.");
+    }
   };
 
   // Drag & drop configuration
@@ -844,6 +970,14 @@ export default function App() {
                         COPY SHARE LINK
                       </Button>
                       <Button
+                        variant="outline"
+                        onClick={() => handleNativeShare({ title: "O-Clip Share", text: `Access code: ${fetchedRecord.code}`, url: `${window.location.origin}/${fetchedRecord.type === "file" ? "f" : "t"}/${fetchedRecord.code}` })}
+                        className="flex items-center gap-2 text-xs font-bold"
+                      >
+                        <Share2 size={14} />
+                        SHARE TO APPS
+                      </Button>
+                      <Button
                         variant="secondary"
                         onClick={async () => {
                           const directUrl = `${window.location.origin}/${fetchedRecord.type === "file" ? "f" : "t"}/${fetchedRecord.code}`;
@@ -880,7 +1014,7 @@ export default function App() {
           <div className="bg-white dark:bg-neutral-900 border-4 border-black dark:border-white shadow-[12px_12px_0_0_rgba(0,0,0,1)] dark:shadow-[12px_12px_0_0_#ffdb33] max-w-md w-full p-6 text-center animate-in zoom-in-95 duration-200">
             <h2 className="font-head text-lg sm:text-xl uppercase mb-4 text-black dark:text-white">Clip Saved Successfully!</h2>
             
-            <div className="space-y-6">
+            <div className="space-y-5">
               {/* Massive 4-digit code */}
               <div className="bg-neutral-100 dark:bg-neutral-800 border-2 border-black p-4 select-all">
                 <p className="text-[10px] uppercase font-head text-muted-foreground tracking-widest">Share Code</p>
@@ -889,20 +1023,40 @@ export default function App() {
                 </p>
               </div>
 
-              {/* QR Code image */}
+              {/* Native Share button */}
+              <Button 
+                onClick={() => handleNativeShare({ title: "O-Clip Share", text: `Access code: ${savedShareInfo.code}`, url: savedShareInfo.url })}
+                className="w-full flex items-center justify-center gap-2 font-bold text-sm min-h-[46px]"
+              >
+                <Share2 size={18} />
+                NATIVE SHARE TO APPS
+              </Button>
+
+              {/* QR Code image & Download Options */}
               <div className="flex flex-col items-center gap-2">
                 <div className="border-4 border-black p-2 bg-white rounded-xs">
-                  <img src={savedShareInfo.qrCodeUrl} alt="QR Code" className="w-[160px] h-[160px]" />
+                  <img src={savedShareInfo.qrCodeUrl} alt="QR Code" className="w-[150px] h-[150px]" />
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => downloadQrCode(savedShareInfo.qrCodeUrl, savedShareInfo.code)}
-                  className="flex items-center gap-1.5 border-black dark:border-white mt-1"
-                >
-                  <Download size={12} />
-                  Download QR Code
-                </Button>
+                <div className="flex flex-wrap gap-2 justify-center mt-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => downloadQrCode(savedShareInfo.qrCodeUrl, savedShareInfo.code)}
+                    className="flex items-center gap-1.5 border-black dark:border-white text-xs"
+                  >
+                    <Download size={12} />
+                    QR Only
+                  </Button>
+                  <Button 
+                    variant="secondary" 
+                    size="sm"
+                    onClick={() => generateAndDownloadShareCard(savedShareInfo.code, savedShareInfo.type, savedShareInfo.url, savedShareInfo.qrCodeUrl)}
+                    className="flex items-center gap-1.5 border-black dark:border-white text-xs font-bold"
+                  >
+                    <ImageIcon size={12} />
+                    Download Retro Share Card
+                  </Button>
+                </div>
               </div>
 
               {/* Direct share link */}
