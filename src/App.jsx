@@ -250,13 +250,9 @@ export default function App() {
         })
       });
 
-      if (!initRes.ok) {
-        throw new Error(`Upload initialization failed with status ${initRes.status}`);
-      }
-
       const initData = await initRes.json();
-      if (!initData.success) {
-        throw new Error(initData.error || "Failed to initialize upload on storage.to");
+      if (!initRes.ok || !initData.success) {
+        throw new Error(initData.error || `Upload initialization failed with status ${initRes.status}`);
       }
 
       const { upload_url, r2_key } = initData;
